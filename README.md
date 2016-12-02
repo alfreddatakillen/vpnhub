@@ -1,5 +1,14 @@
 # vpnhub
+
 Install and configuration scripts for setting up an VPN server.
+
+Features:
+
+* OpenVPN 2.x
+
+Prerequisites:
+
+* A fresh install of a modern Ubuntu or Debian.
 
 ## Install on Ubuntu 16.04 (will probably work on other versions and on Debian)
 
