@@ -1,31 +1,55 @@
 # vpnhub
 
-Install and configuration scripts for setting up an VPN server.
+Install and configuration scripts for setting up the VPN server
 
-Features:
+## Install
 
-* OpenVPN 2.x
+First, get yourself a fresh install of Debian or Ubuntu. Then, as root:
 
-Prerequisites:
+	apt-get -y update
+	apt-get -y install git
+	git clone https://github.com/alfreddatakillen/vpnhub /opt/vpnhub
+	/opt/vpnhub/setup.sh
 
-* A fresh install of a modern Ubuntu or Debian.
+Violà!
 
-## Install on Ubuntu 16.04 (will probably work on other versions and on Debian)
+### Debian yada yada
 
-1. Clone the repo.
-2. Run ./setup.sh
-3. Violà!
+On Debian, you might have to run
 
-## Install on Amazon Lightsail
+	/lib/systemd/system-generators/openvpn-generator server
+	systemctl enable openvpn@server.service
+	systemctl restart openvpn@server.service
 
-Create an Amazon Lightsail instance, using the "Ubuntu 16.04 LTS" base OS image.
-The smallest instance plan is adequate for starters.
+(The `server` string above is a reference to the config file named
+`server.conf` in `/etc/openvpn`. So you might have to do the same on the client
+if the client is a Debian, but then change `server` to `client` on all the
+rows above.)
 
-Copy-paste this code as your "Lauch Script":
+### Route traffic to the Internet over the VPN
 
-		apt-get -y update
-		apt-get -y install git
-		git clone https://github.com/alfreddatakillen/vpnhub /opt/vpnhub
-		/opt/vpnhub/setup.sh
+Add this row on the client's `client.conf` to route all it's traffic through
+the VPN:
 
+	redirect-gateway def1
+
+Support must be added to the server also:
+
+	echo 1 > /proc/sys/net/ipv4/ip_forward
+	iptables -I FORWARD -i tap0 -o eth0 -s 10.11.12.0/24 -m conntrack --ctstate NEW -j ACCEPT
+	iptables -I FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+	iptables -t nat -I POSTROUTING -o eth0 -s 10.11.12.0/24 -j MASQUERADE
+
+## Create client configurations
+
+To create configuration for users:
+
+	/opt/vpnhub/create-client.sh bobby vpn.example.org
+
+Where `bobby` is a unique identifier for the user, and `vpn.example.org` is
+the hostname for the VPN server.
+
+This will create the file `bobby.tar.bz2` in your current working dir.
+The tarball contains all configuration and keys needed for bobby to connect
+to the VPN.
 
